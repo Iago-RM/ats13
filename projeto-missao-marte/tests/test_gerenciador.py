@@ -3,6 +3,7 @@ from src.gerenciador_recursos import (
     OxigenioInsuficienteError,
     NivelEmergenciaInvalidoError
 )
+from src.servico_telemetria import ServicoTelemetriaEspacial
 
 class TestGerenciadorRecursos:
 
@@ -44,3 +45,30 @@ class TestGerenciadorRecursos:
     def test_aplicar_racionamento_invalido(self, gerenciador):
         with pytest.raises(ValueError):
             gerenciador.aplicar_racionamento(percentual_cota=1.5)
+
+    # --- Testes com Mocks (Requisito 2) ---
+    def test_aplicar_taxa_emergencia_dispara_alerta_crise(self, gerenciador, mocker):
+        mock_telemetria = mocker.Mock(spec=ServicoTelemetriaEspacial)
+        gerenciador.estoque_oxigenio = 5.0
+        fator_multiplicador = 4.0  # Demanda = 40.0 (> 5.0)
+        
+        with pytest.raises(OxigenioInsuficienteError, match="Oxigênio insuficiente durante taxa de emergência!"):
+            gerenciador.aplicar_taxa_emergencia(
+                fator_multiplicador=fator_multiplicador, 
+                telemetria_servico=mock_telemetria
+            )
+        
+        mock_telemetria.enviar_alerta_crise.assert_called_once_with(5.0, 40.0)
+
+    def test_aplicar_taxa_emergencia_sem_crise_nao_dispara_alerta(self, gerenciador, mocker):
+        mock_telemetria = mocker.Mock(spec=ServicoTelemetriaEspacial)
+        gerenciador.estoque_oxigenio = 100.0
+        fator_multiplicador = 2.0  # Demanda = 20.0 (<= 100.0)
+        
+        novo_estoque = gerenciador.aplicar_taxa_emergencia(
+            fator_multiplicador=fator_multiplicador, 
+            telemetria_servico=mock_telemetria
+        )
+        
+        assert novo_estoque == 80.0
+        mock_telemetria.enviar_alerta_crise.assert_not_called()
