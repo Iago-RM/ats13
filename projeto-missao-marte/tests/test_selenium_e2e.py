@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 import pytest
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -10,29 +11,25 @@ class TestPainelE2E:
     def setup_screenshot(self, browser, request):
         """Captura automaticamente a tela em caso de falha no teste (Requisito 3)."""
         yield
-        if request.node.rep_call.failed:
+        if hasattr(request.node, "rep_call") and request.node.rep_call.failed:
             os.makedirs("tests/screenshots", exist_ok=True)
             screenshot_path = f"tests/screenshots/{request.node.name}.png"
             browser.save_screenshot(screenshot_path)
 
-    @pytest.fixture(autouse=True)
-    def hook_report(self, request):
-        yield
-        request.node.rep_call = getattr(request.node, "rep_call", None)
-
     @pytest.hookimpl(tryfirst=True, hookwrapper=True)
-    def pytest_runtest_makereport(item, call):
+    def pytest_runtest_makereport(self, item, call):
         outcome = yield
         rep = outcome.get_result()
         setattr(item, "rep_call", rep)
 
     def test_solicitacao_cota_oxigenio_web(self, browser):
-        # Obtém o caminho absoluto do arquivo painel.html
-        base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-        painel_path = os.path.fspath(os.path.join(base_dir, "src", "web", "painel.html"))
+        # Usa pathlib para gerar a URL do arquivo local de forma segura para o browser
+        base_dir = Path(__file__).resolve().parent.parent
+        painel_path = base_dir / "web" / "painel.html"
+        url_file = painel_path.as_uri()  # Converte corretamente para file:///...
         
         # Abre o painel HTML no browser
-        browser.get(f"file:///{painel_path}")
+        browser.get(url_file)
 
         # Espera explícita para garantir que o campo de entrada está carregado no DOM
         wait = WebDriverWait(browser, 10)
