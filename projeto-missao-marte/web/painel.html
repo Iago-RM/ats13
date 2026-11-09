@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Painel de Controle - ECLSS Marte</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background-color: #121212; color: #e0e0e0; }
+        .container { max-width: 600px; margin: auto; background: #1e1e1e; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.3); }
+        h1 { color: #4caf50; text-align: center; }
+        .status-box { background: #2d2d2d; padding: 15px; margin-bottom: 20px; border-radius: 4px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; }
+        input { width: 100%; padding: 8px; box-sizing: border-box; background: #333; border: 1px solid #555; color: #fff; border-radius: 4px; }
+        button { background: #4caf50; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; width: 100%; }
+        button:hover { background: #45a049; }
+        #mensagem { margin-top: 15px; font-weight: bold; text-align: center; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>ECLSS - Habitat Marte</h1>
+        <div class="status-box">
+            <h3>Status dos Recursos</h3>
+            <p>Oxigênio Disponível: <span id="nivel-oxigenio">500.0</span> L</p>
+            <p>Água Disponível: <span id="nivel-agua">1000.0</span> L</p>
+        </div>
+        <div class="form-group">
+            <label for="cota-extra">Solicitar Cota Extra de Oxigênio (L):</label>
+            <input type="number" id="cota-extra" placeholder="Digite a quantidade">
+        </div>
+        <button id="btn-solicitar" onclick="solicitarCota()">Solicitar Cota</button>
+        <div id="mensagem"></div>
+    </div>
+
+    <script>
+        function solicitarCota() {
+            const qtd = parseFloat(document.getElementById('cota-extra').value);
+            const msgEl = document.getElementById('mensagem');
+            const o2El = document.getElementById('nivel-oxigenio');
+            
+            if (isNaN(qtd) || qtd <= 0) {
+                msgEl.style.color = '#ff5252';
+                msgEl.innerText = 'Por favor, insira um valor válido!';
+                return;
+            }
+
+            let atual = parseFloat(o2El.innerText);
+            atual += qtd;
+            o2El.innerText = atual.toFixed(1);
+            msgEl.style.color = '#4caf50';
+            msgEl.innerText = `Sucesso! Cota de ${qtd}L de oxigênio aprovada.`;
+        }
+    </script>
+</body>
+</html>
